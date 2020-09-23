@@ -1,0 +1,37 @@
+###################################################
+#QMT Homework 2 Code
+#What the code does?
+#Iris Arbogast (irisarbogast@gmail.com)
+#Sept 22, 2020
+###################################################
+
+# Parameters
+A = .592
+B = .075
+α = .33
+β = .96
+θ = 1.0
+γ = 2
+ω = 2
+
+################Question 1#########################
+#Solve the model using value function interation + discretization
+#Plot V and k' as a function of k and include two lines, one for each value of the shock ϵ
+#Do the same for the policy function
+#Explain your decision of the minimum and maximum point k in the grid
+
+######Solve the model using value function iteration + discretization
+###Step 1
+#set parameters
+n = 100
+k_up = kss+.01 #?
+k_lo = .01
+ϵ = ?
+
+###Step 2
+#make a grid
+
+K_vec = np.linspace(start=k_bot,stop=k_top,num=n)
+Ki_array = np.repeat(K_vec,n)
+Ki_array.shape=(n,n)
+Kj_array = Ki_array.transpose()
