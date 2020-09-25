@@ -13,7 +13,10 @@ B = .075
 θ = 1.0
 γ = 2
 ω = 2
-
+σ = .051
+λ = .44
+ϵ = [0.051,-0.051]
+π = 0.5
 ################Question 1#########################
 #Solve the model using value function interation + discretization
 #Plot V and k' as a function of k and include two lines, one for each value of the shock ϵ
@@ -23,15 +26,141 @@ B = .075
 ######Solve the model using value function iteration + discretization
 ###Step 1
 #set parameters
-n = 100
-k_up = kss+.01 #?
-k_lo = .01
-ϵ = ?
+n = 150
+k_up = .5*1.05 #Need to multiply by the steady state but what is it?
+k_lo = .05
+ϵ = 1 #what should I set this to
 
 ###Step 2
-#make a grid
+#create Ki grid and reshape
+Ki_grid = collect(range(k_lo, stop = k_up, length = n))
+#transpose to Kj grid
 
-K_vec = np.linspace(start=k_bot,stop=k_top,num=n)
-Ki_array = np.repeat(K_vec,n)
-Ki_array.shape=(n,n)
-Kj_array = Ki_array.transpose()
+#Step 3
+#set an initial value
+V1 = V0 #matrix for updated values of kt
+g = V0 #maybe delete?
+
+#create V0, an array of 2*150 1s (a guess)
+V0 = zeros(2*n) #matrix to hold values for kt
+V0 = reshape(V0, (150,2)) #reshape matrix
+fill!(V0, 1)
+
+
+#create Vij for ϵ1, an array of 150*150 zeros
+Vij = zeros(n*n)
+Vij = reshape(Vij, (150,150))
+
+#create Vij for ϵ2, an array of 150*150 zeros
+Vij2 = zeros(n*n)
+Vij2 = reshape(Vij2, (150,150))
+
+###Define functions
+#production function
+prod(K,h,l) = A*((K*h)^α)*(l^(1-α))
+
+#constraint
+constr(Ki, Kj, l, h, r) = prod(Ki,h,l) - (Kj*exp(-ϵ)) +
+                        (Ki*(1-((B*(h^ω)/ω)))))*exp(-ϵ))
+
+hhat(Ki, ϵ) = A*α*((Ki*h)^(α-1))*l^(1-α) + (Ki*(1-B*h^(ω-1))*exp(-ϵ)
+lhat(Ki) = A*((Ki*h)^(α))*(1-α)*l^(-α) - l^θ
+
+
+#value function
+function value(Ki,Kj,Vo,l,h,j,r)
+        rez = ((1/(1-γ))*(((constr(Ki, Kj, l, h, r) - ((l^(1+θ))/(1+θ)))^(1-γ)) .+
+                            (β*((π[r, 1] .* Vo[Kj, ϵ]) .+ (π*[r, 2] .* Vo[Kj, ϵ])))))
+        if isnan(rez) || isinf(rez)
+            return -500
+        else
+            return rez
+        end
+    end
+
+print(value(1,1,([[1,1],[1,1]]),1,1,1,1))
+
+
+#Step 4
+#Update the value function to obtain V'
+#A: Compute value conditional on the choice of kj
+
+maxits = 1000
+dif = 1
+its = 1
+ϵ = 0.0001
+while dif>ϵ && its < maxits
+    for i = 1:n
+        for j = 1:n
+                objective <- function(c){ - log(c) - beta * Interp(f(k,alpha) - c)}
+                h,el = res.x
+                Vij[r,j]=
+
+            else
+                v1_guess = k0^0.5*l0^0.5 + (1-delta)*k0 - k1_guess + beta*v0_mat(j); # or whatever the value function formula is ...
+            end
+
+            if v1_guess > v1_mat(i) # if the value corresponding to the choice of capital k1_guess is higher than others we've seen so far ...
+                k1_mat(i,1) = k1_guess;
+                v1_mat(i,1) = v1_guess;
+                g(i,1) = j; #this is the "maximizer called g_i^1" mentioned in class--the index corresponding to the optimal k_{t+1} for each k_t
+            end
+        end
+    end
+    dif = abs(max(v1_mat - v0_mat)); # calculate difference between old & new value function guesses
+    v0_mat = v1_mat; # updates (really, replaces) guesses
+    v1_mat = -9999*ones(N,1); # resets for next loop
+    its = its+1;
+
+    if its == maxits
+        disp('MAX ITERATIONS REACHED!')
+    end
+    # I /assume/ Howard policy function iteration happens here
+end
+
+
+
+
+
+function solver(n,k_up,k_low)
+    #set v0
+    V0 = zeros(2*n) #matrix to hold values for kt
+    V0 =reshape(V0, (n,2)) #reshape matrix
+    fill!(V0, 1)
+
+    #we get the following functions
+    #first order conditions for h and l
+    hhat(Ki, r) = A*α*((Ki*h)^(α-1))*l^(1-α) + (Ki*(1-B*h^(ω-1))*exp(-ϵ[r])
+    lhat(Ki) = A*((Ki*h)^(α))*(1-α)*l^(-α) - l^θ
+    #constraint
+    constr(Ki, Kj, l, h, r) = prod(Ki,h,l) - (Kj*exp(-ϵ[r])) +
+                            (Ki*(1-((B*(h^ω)/ω)))))*exp(-ϵ[r]))
+    c(Ki,Kj,r)=constr(Ki,Kj,lhat(Ki),hhat(Ki,r),r)
+
+
+    #2 matrices, n by n, 2 for each starting ϵ
+    #create Vij for ϵ1, an array of n*n zeros
+    Vij = zeros(n*n)
+    Vij = reshape(Vij, (n,n))
+
+    #create Vij for ϵ2, an array of n*n zeros
+    Vij2 = zeros(n*n)
+    Vij2 = reshape(Vij2, (n,n))
+
+    #for the first term of V we just evaluate it
+
+    #for the second term we have an average of the outputs for
+        #each ϵ which we get from V0
+    for i = 1:n
+        for j = 1:n
+            for r = 1:2
+                c(Ki_grid[i],Ki_grid[j],r)+β*(0.5*V0[j,1]+0.5*V[j,2])
+
+            end
+        end
+    end
+
+    #we do this for both matrices, then we take row maxes
+    #   and plug these values into our V, n by 2 matrix
+
+end
