@@ -1,0 +1,91 @@
+# Parameters
+A = .592
+B = .075
+α = .33
+β = .96
+θ = 1.0
+γ = 2
+ω = 2
+σ = .051
+λ = .44
+ϵ = [0.051,-0.051]
+π = 0.5
+
+#production function
+prod(K,h,l) = A*((K*h)^α)*(l^(1-α))
+
+#consumption constraint, r is index for ϵ
+constr(Ki, Kj, l, h, r) = prod(Ki,h,l) - (Kj*exp(-ϵ[r])) + (Ki*(1-((B*(h^ω)/ω))))*exp(-ϵ[r])
+
+#first calculating h(k) and l(k) from the FOC for h, l
+
+#some intermediate things I didn't want to retype
+Coef(k) = ((1-α)*A*k^α)^(1/(θ+α))
+ugly_exponent = 1/(1-ω-(1-α)^2/(θ+α))
+#the functions for h, l in terms of k and r
+h(k,r) = ((B*k*exp(-ϵ[r]))*(α*A*Coef(k))^(α-1))^ugly_exponent
+l(k,r) = Coef(k)*h(k,r)^(α/(θ+α))
+
+#c as a function of Ki, Kj, and r
+c(Ki,Kj,r)=constr(Ki,Kj,l(Ki,r),h(Ki,r),r)
+
+#does our solving
+function solver(n,k_up,k_low,tolerance=10e-7,maxiter=1000)
+
+    #setting the Ki grid
+    Ki_grid = collect(range(k_low, stop = k_up, length = n))
+
+    iter = 0
+    #create a V1 matrix (V0 is set at the beginning of the loop)
+    V1 = repeat([1.0],n,2)
+    maxdiff = 1
+
+    while maxdiff >= tolerance
+        #leaving if we're past our max iteration
+        if iter >= maxiter
+            println("We hit the maximum iterations :(")
+            return V1
+        end
+
+        iter+= 1
+        print("iter $iter ")
+        #otherwise we start a new iteration setting V0 to V1
+        V0 = copy(V1)
+
+        #updating V1
+        #i is this period capital index, j is next period capital index
+        for i in 1:n, j in 1:n
+            #if it's the first value for this row, it's the current max
+            if(j == 1)
+                #set the new V1 value using V0 as our guess for second term
+                V1[i,1] = c(Ki_grid[i],Ki_grid[j],1)+β*(0.5*V0[j,1]+0.5*V0[j,2])
+                V1[i,2] = c(Ki_grid[i],Ki_grid[j],2)+β*(0.5*V0[j,1]+0.5*V0[j,2])
+            else
+                #in this case either Vij > Vi,max and we reset Vi,max or
+                    #it's less and we just continue
+                for r in 1:2
+                    temp = c(Ki_grid[i],Ki_grid[j],r)+β*(0.5*V0[j,1]+0.5*V0[j,2])
+                    if temp > V1[i,r]
+                        V1[i,r] = temp
+                    end
+                end
+            end
+        end
+
+        #getting the max difference
+        maxdiff = 0
+        for i in 1:n, r in 1:2
+            diff = abs(V1[i,r]-V0[i,r])
+            if diff > maxdiff
+                maxdiff = diff
+            end
+        end
+
+        println("maxdiff $maxdiff")
+    end
+
+    println("Holy shit it worked!")
+    return V1
+end
+
+@time V = solver(100,0.9,0.05)
